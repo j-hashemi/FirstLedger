@@ -19,25 +19,26 @@ namespace FirstLedger.WebCore.Controllers
         {
             this._ledgerService = ledgerService;
         }
+        /// <summary>
+        /// Get default ledger.
+        /// </summary>
+        /// <returns>Ledger.</returns>
+        [HttpGet(Name = "Default")]
+        public async Task<LedgerQueryResponse> GetDefultLedger()
+        {
+            return await this._ledgerService.GetDefaultLedger();
+        }
 
         /// <summary>
         /// Get ledger balance.
         /// </summary>
         /// <returns>Ledger.</returns>
-        [HttpGet(Name = "GetLedgerBalance")]
+        [HttpGet("Balance/{ledgerId}")]
         public async Task<decimal> GetLedgerBalance(Guid ledgerId)
         {
             return await this._ledgerService.GetLedgerBalance(ledgerId);
         }
 
-        /// <summary>
-        /// Get default ledger.
-        /// </summary>
-        /// <returns>Ledger.</returns>
-        [HttpGet(Name = "GetDefultLedger")]
-        public async Task<LedgerQueryResponse> GetDefultLedger()
-        {
-            return await this._ledgerService.GetDefaultLedger();
-        }
+       
     }
 }

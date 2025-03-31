@@ -31,14 +31,14 @@ namespace FirstLedger.WebCore.Controllers
             return await this._ledgerService.GetLedgerTransactions(ledgerId, pageNumber, pageSize, searchText);
         }
 
-        [HttpPost]
+        [HttpPost(Name = "AddTransaction")]
         public async Task<Transaction> AddTransaction(TransactionRequest transactionRequest)
         {
             ArgumentNullException.ThrowIfNull(transactionRequest, nameof(transactionRequest));
             return await this._ledgerService.AddTransactionToLedger(transactionRequest);
         }
 
-        [HttpPut]
+        [HttpPut(Name = "EditTransaction")]
         public async Task<Transaction> EditTransaction(EditTransactionRequest request)
         {
             ArgumentNullException.ThrowIfNull(request, nameof(request));
