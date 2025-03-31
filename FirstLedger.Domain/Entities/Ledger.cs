@@ -12,7 +12,7 @@
         /// <exception cref="ArgumentNullException">name is required.</exception>
         public Ledger(string name)
         {
-            if(string.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(name))
             {
                 throw new ArgumentNullException(nameof(name));
             }
@@ -25,7 +25,7 @@
         /// <summary>
         /// Ledger ID.
         /// </summary>
-        public Guid Id { get; set; }= Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
         /// Ledger name.
@@ -58,14 +58,14 @@
                 throw new ArgumentNullException(nameof(newTransaction));
             }
 
-            
+
             if (newTransaction.IsCredit)
             {
                 this.Balance += newTransaction.Amount;
             }
             else
             {
-                if(this.Balance < newTransaction.Amount)
+                if (this.Balance < newTransaction.Amount)
                 {
                     throw new Exception("Insufficient balance.");
                 }
@@ -94,7 +94,12 @@
 
             if (existTransaction.IsCredit)
             {
+
                 this.Balance += differentAmount;
+                if (this.Balance < 0)
+                {
+                    throw new Exception("Insufficient balance.");
+                }
             }
             else
             {
@@ -104,6 +109,8 @@
                 }
                 this.Balance -= differentAmount;
             }
+            existTransaction.Amount = newAmount;
+            existTransaction.Description = description;
             return existTransaction;
         }
     }
