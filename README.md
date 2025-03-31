@@ -14,8 +14,10 @@ A simple ledger API built using .NET 8.0 with features like:
 ```bash
 git clone https://github.com/j-hashemi/FirstLedger.git
 cd FirstLedger
+cd FirstLedger.Web
 dotnet run
 ```
+To view the swagger after running the application please add **/swagger/index.html** at the end of the given URL.
 
 ### Project Structure
 - **Web**: Contains controllers to handle incoming HTTP requests and return responses.
