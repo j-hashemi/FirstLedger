@@ -1,0 +1,6 @@
+@FirstLedger.WebCore_HostAddress = http://localhost:5264
+
+GET {{FirstLedger.WebCore_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
