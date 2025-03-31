@@ -11,6 +11,7 @@ namespace FirstLedger.Service.Services
     public class LedgerService : ILedgerService
     {
         private ILedgerRepository _ledgerRepository;
+        private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         /// <summary>
         /// LedgerService.
@@ -29,12 +30,22 @@ namespace FirstLedger.Service.Services
         /// <exception cref="Exception">if the ledger can't be found.</exception>
         public async Task<Transaction> AddTransactionToLedger(TransactionRequest request)
         {
-            Ledger ledger = await GetLedger(request.LedgerId);
-            Transaction newTransaction = Transaction.CreateNewTransaction(request.Amount, request.TransactionType, request.Description, ledger);
+            Transaction newTransaction;
+            await _semaphore.WaitAsync();
+            try
+            {
+                Ledger ledger = await GetLedger(request.LedgerId);
+                 newTransaction = Transaction.CreateNewTransaction(request.Amount, request.TransactionType, request.Description, ledger);
 
-            ledger.AddTransaction(newTransaction);
+                ledger.AddTransaction(newTransaction);
 
-            await this._ledgerRepository.UpdateLedger(ledger);
+                await this._ledgerRepository.UpdateLedger(ledger);
+            }
+            finally
+            {
+                 _semaphore.Release();
+            }
+
             return newTransaction;
         }
 
@@ -45,13 +56,24 @@ namespace FirstLedger.Service.Services
         /// <returns></returns>
         public async Task<Transaction> EditTransaction(EditTransactionRequest request)
         {
-            //In real world scenario we are not fetching ledger with all transactions to edit but in here because 
-            // we are keeping all the data in memory I use this approach. 
+            await _semaphore.WaitAsync();
+            Transaction transaction;
+            try
+            {
+                //In real world scenario we are not fetching ledger with all transactions to edit but in here because 
+                // we are keeping all the data in memory I use this approach. 
 
-            Ledger ledger = await GetLedger(request.LedgerId);
-            var transaction = ledger.EditTransaction(request.Id, request.Amount, request.Description);
+                Ledger ledger = await GetLedger(request.LedgerId);
+                transaction = ledger.EditTransaction(request.Id, request.Amount, request.Description);
 
-            await this._ledgerRepository.UpdateLedger(ledger);
+                await this._ledgerRepository.UpdateLedger(ledger);
+            }
+            finally
+            {
+                _semaphore.Release();
+
+            }
+            
             return transaction;
 
         }
@@ -80,7 +102,7 @@ namespace FirstLedger.Service.Services
         public async Task<decimal> GetLedgerBalance(Guid ledgerId)
         {
             Ledger ledger = await GetLedger(ledgerId);
-           
+
             return ledger.Balance;
         }
 
@@ -93,7 +115,7 @@ namespace FirstLedger.Service.Services
         /// <param name="pageSize">page size default value is 10.</param>
         /// <param name="searchText"></param>
         /// <returns>Transactions Query Response.</returns>
-        public async Task<TransactionsQueryResponse> GetLedgerTransactions(Guid ledgerId, int pageNumber=1, int pageSize=10, string searchText="")
+        public async Task<TransactionsQueryResponse> GetLedgerTransactions(Guid ledgerId, int pageNumber = 1, int pageSize = 10, string searchText = "")
         {
             // In real world scenario we never get transaction from ledger object
             // we directly query from ledger table but in this implementation because its gets application more complecated
@@ -107,26 +129,27 @@ namespace FirstLedger.Service.Services
             {
                 var transactions = query.Where(x => x.Description.Contains(searchText));
             }
-            
+
             response.TotalCount = query.Count();
-            response.Items =  query.Select(x => new TransactionQueryResponseItem()
-             {
-                 DateTime = x.DateTime,
-                 Description = x.Description,
-                 Id = x.Id,
-                 LedgerId = x.LedgerId,
-                 Amount = x.Amount,
-                 LedgerName = ledger.Name,
-                 TransactionType = (int)x.Type,
-             }).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            response.Items = query.Select(x => new TransactionQueryResponseItem()
+            {
+                DateTime = x.DateTime,
+                Description = x.Description,
+                Id = x.Id,
+                LedgerId = x.LedgerId,
+                Amount = x.Amount,
+                LedgerName = ledger.Name,
+                TransactionType = (int)x.Type,
+            }).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
             return response;
-            
+
         }
 
         private async Task<Ledger> GetLedger(Guid ledgerId)
         {
-            return await this._ledgerRepository.GetLedger(ledgerId) ?? throw new Exception("Ledger not found.");
+            var ledger = await _ledgerRepository.GetLedger(ledgerId);
+            return ledger ?? throw new Exception("Ledger not found.");
         }
     }
 }
