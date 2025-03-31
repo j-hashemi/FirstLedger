@@ -136,6 +136,39 @@ namespace FirstLedger.Test
             Assert.Equal(transaction.Description, resposne.Items[0].Description);
         }
 
+        [Fact]
+        public async Task AddTransaction_ShouldChangeBalance_WhenDepositTransaction()
+        {
+            // Arrange
+            LedgerQueryResponse ledger = await this._ledgerService.GetDefaultLedger();
+            var request = new TransactionRequest()
+            {
+                Amount = 10,
+                LedgerId = ledger.Id,
+                TransactionType = (int)TransactionType.Deposit,
+                Description = "Description"
+            };
+
+            Transaction transaction = await this._ledgerService.AddTransactionToLedger(request);
+
+            // Act
+            var edited = new EditTransactionRequest()
+            {
+                LedgerId = ledger.Id,
+                Id = transaction.Id,
+                Amount = 20,
+                Description = "Edited Description"
+            };
+            await this._ledgerService.EditTransaction(edited);
+            var balance = await this._ledgerService.GetLedgerBalance(ledger.Id);
+
+            var queryResponse = await this._ledgerService.GetLedgerTransactions(ledger.Id);
+
+            // Asserts
+            Assert.Equal(balance,edited.Amount);
+            Assert.Equal(queryResponse.Items[0].Amount, edited.Amount);
+
+        }
 
         /// <summary>
         /// Clear Data after each running test.

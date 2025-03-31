@@ -89,6 +89,11 @@
         /// <return>Transaction.</return>
         public Transaction EditTransaction(Guid transactionId, decimal newAmount, string description)
         {
+            if (newAmount < 0)
+            {
+                throw new ArgumentOutOfRangeException("Amount should be more than zero");
+            }
+
             Transaction existTransaction = this.Transactions.FirstOrDefault(x => x.Id == transactionId) ?? throw new Exception("Transaction Not Found");
             decimal differentAmount = newAmount - existTransaction.Amount;
 
